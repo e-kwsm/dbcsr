@@ -95,9 +95,9 @@ CONTAINS
          WRITE (io_unit, *) 'test_name ', test_name
          numthreads = 1
 !$OMP PARALLEL
-!$OMP MASTER
+!$OMP MASKED
 !$       numthreads = omp_get_num_threads()
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
          WRITE (io_unit, *) 'numthreads', numthreads
          WRITE (io_unit, *) 'numnodes', numnodes

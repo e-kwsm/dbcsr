@@ -126,9 +126,9 @@ CONTAINS
       nthreads = 1
 !$    nthreads = OMP_GET_NUM_THREADS()
 
-!$OMP     MASTER
+!$OMP     MASKED
       ALLOCATE (all_thread_privates(0:nthreads - 1))
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
    END SUBROUTINE dbcsr_mm_accdrv_lib_init
 
@@ -153,9 +153,9 @@ CONTAINS
          CALL dbcsr_mempool_destruct(thread_privates%memtype_cbuffer%pool)
 
 !$OMP     BARRIER
-!$OMP     MASTER
+!$OMP     MASKED
       DEALLOCATE (all_thread_privates)
-!$OMP     END MASTER
+!$OMP     END MASKED
 
       !How much memory is still allocated on the card?
       !istat = dbcsr_acc_dev_mem_info(mem_free, mem_avail)
@@ -225,9 +225,9 @@ CONTAINS
       nthreads = 1
 !$    nthreads = OMP_GET_MAX_THREADS()
 
-!$OMP MASTER
+!$OMP MASKED
       CALL stream_array_force_size(thread_streams, "Calc stream", n=nthreads)
-!$OMP END MASTER
+!$OMP END MASKED
 ! Other threads have to wait until streams are created
 !$OMP BARRIER
 
@@ -236,9 +236,9 @@ CONTAINS
    SUBROUTINE deallocate_streams()
       !! Helper routine used by setup_streams() and dbcsr_mm_accdrv_lib_finalize()
 
-!$OMP MASTER
+!$OMP MASKED
       CALL stream_array_force_size(thread_streams, "Calc stream", n=0)
-!$OMP END MASTER
+!$OMP END MASKED
 
    END SUBROUTINE deallocate_streams
 

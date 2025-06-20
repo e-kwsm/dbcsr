@@ -247,9 +247,9 @@ CONTAINS
       IF (io_unit .GT. 0) THEN
          numthreads = 1
 !$OMP PARALLEL
-!$OMP MASTER
+!$OMP MASKED
 !$       numthreads = omp_get_num_threads()
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
          WRITE (io_unit, *) 'numthreads', numthreads
          WRITE (io_unit, *) 'numnodes', numnodes

@@ -116,9 +116,9 @@ CONTAINS
       nthreads = 1; ithread = 0
 !$    nthreads = OMP_GET_NUM_THREADS(); ithread = OMP_GET_THREAD_NUM()
 
-!$OMP     MASTER
+!$OMP     MASKED
       ALLOCATE (stats_per_thread(0:nthreads - 1))
-!$OMP     END MASTER
+!$OMP     END MASKED
 
 !$OMP     BARRIER
 
@@ -132,9 +132,9 @@ CONTAINS
       !! Finalize the library and prints DBCSR statistics
       CALL dbcsr_mm_accdrv_lib_finalize()
       CALL dbcsr_mm_hostdrv_lib_finalize()
-!$OMP    MASTER
+!$OMP    MASKED
       DEALLOCATE (stats_per_thread)
-!$OMP    END MASTER
+!$OMP    END MASKED
    END SUBROUTINE dbcsr_mm_sched_lib_finalize
 
    SUBROUTINE dbcsr_mm_sched_print_statistics(group, output_unit)
@@ -468,10 +468,10 @@ CONTAINS
       TYPE(stats_type), POINTER                          :: istats
 
 !$OMP PARALLEL DEFAULT(NONE) SHARED(nthreads)
-!$OMP MASTER
+!$OMP MASKED
       nthreads = 1
 !$    nthreads = OMP_GET_NUM_THREADS()
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
 
       DO i = 0, nthreads - 1
@@ -509,7 +509,7 @@ CONTAINS
       INTEGER, ALLOCATABLE, DIMENSION(:)                 :: mnk_collected
       INTEGER, DIMENSION(3)                              :: mnk
 
-!$OMP     MASTER
+!$OMP     MASKED
 
       CALL mp_environ(nranks, myrank, group)
 
@@ -553,7 +553,7 @@ CONTAINS
             END IF
          END DO
       END DO
-!$OMP     END MASTER
+!$OMP     END MASKED
    END SUBROUTINE stats_collect_from_ranks
 
    SUBROUTINE stats_print_report(report, output_unit)

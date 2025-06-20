@@ -606,10 +606,10 @@ CONTAINS
          numthreads = -1
          numthreads_max = -1
 !$OMP PARALLEL DEFAULT(NONE) SHARED(numthreads, numthreads_max)
-!$OMP MASTER
+!$OMP MASKED
 !$       numthreads = omp_get_num_threads()
 !$       numthreads_max = omp_get_max_threads()
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
          IF (numthreads_max > 0) THEN
             WRITE (UNIT=unit_nr, FMT='(1X,A,T70,I11)') &

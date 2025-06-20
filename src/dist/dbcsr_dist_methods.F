@@ -512,7 +512,7 @@ CONTAINS
       lrows => dbcsr_distribution_local_rows(dist)
 
 !$OMP     BARRIER
-!$OMP     MASTER
+!$OMP     MASKED
 
       load_fraction = REAL(dbcsr_cfg%comm_thread_load%val)/100.0
       IF (nthreads == 1) load_fraction = 1.0
@@ -604,17 +604,17 @@ CONTAINS
             END DO
          END IF
       END IF
-!$OMP     END MASTER
+!$OMP     END MASKED
    END SUBROUTINE make_threads
 
    SUBROUTINE dbcsr_distribution_no_threads(dist)
       !! Removes the thread distribution from a distribution
       TYPE(dbcsr_distribution_obj), INTENT(INOUT)        :: dist
 
-!$OMP MASTER
+!$OMP MASKED
       CALL array_release(dist%d%thread_dist)
       dist%d%has_thread_dist = .FALSE.
-!$OMP END MASTER
+!$OMP END MASKED
    END SUBROUTINE dbcsr_distribution_no_threads
 
 END MODULE dbcsr_dist_methods

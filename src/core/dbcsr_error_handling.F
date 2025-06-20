@@ -68,9 +68,9 @@ CONTAINS
 
       INTEGER                                            :: unit_nr
 
-!$OMP MASTER
+!$OMP MASKED
       warning_counter = warning_counter + 1
-!$OMP END MASTER
+!$OMP END MASKED
 
       unit_nr = dbcsr_logger_get_default_io_unit()
       IF (unit_nr > 0) THEN

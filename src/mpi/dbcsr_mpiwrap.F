@@ -628,13 +628,13 @@ CONTAINS
          CALL mpi_init(ierr)
          IF (ierr /= 0) CALL mp_stop(ierr, "mpi_init @ mp_world_init")
 !$    ELSE
-!$OMP MASTER
+!$OMP MASKED
 !$       CALL mpi_init_thread(MPI_THREAD_FUNNELED, provided_tsl, ierr)
 !$       IF (ierr /= 0) CALL mp_stop(ierr, "mpi_init_thread @ mp_world_init")
 !$       IF (provided_tsl .LT. MPI_THREAD_FUNNELED) THEN
 !$          CALL mp_stop(0, "MPI library does not support the requested level of threading (MPI_THREAD_FUNNELED).")
 !$       END IF
-!$OMP END MASTER
+!$OMP END MASKED
 !$    END IF
       CALL mpi_comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN, ierr)
       IF (ierr /= 0) CALL mp_stop(ierr, "mpi_comm_set_errhandler @ mp_world_init")

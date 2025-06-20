@@ -1247,14 +1247,14 @@ CONTAINS
          !
          ithread = 0
 !$       ithread = OMP_GET_THREAD_NUM()
-!$OMP        MASTER
+!$OMP        MASKED
 !$       nthreads = OMP_GET_NUM_THREADS()
          CALL dbcsr_addto_index_array(matrix, dbcsr_slot_thr_c, &
                                       reservation=nthreads + 1, extra=3*nblks)
          thr_c => matrix%thr_c
          CALL dbcsr_addto_index_array(matrix, dbcsr_slot_coo_l, &
                                       reservation=3*nblks)
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          my_cnt = 0
          IF (matrix%local_indexing) THEN
@@ -1267,9 +1267,9 @@ CONTAINS
          !ENDDO
          thr_c(ithread + 1) = my_cnt
 !$OMP        BARRIER
-!$OMP        MASTER
+!$OMP        MASKED
          CALL dbcsr_build_row_index_inplace(thr_c, nthreads)
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          my_cnt = (thr_c(ithread + 1) + 1)*3 - 2
          IF (matrix%local_indexing) THEN

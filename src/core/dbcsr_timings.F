@@ -194,7 +194,7 @@ CONTAINS
       TYPE(routine_stat_type), POINTER                   :: r_stat
       TYPE(timer_env_type), POINTER                      :: timer_env
 
-!$OMP MASTER
+!$OMP MASKED
 
       ! Default value, using a negative value when timing is not taken
       cs_entry%walltime_start = -HUGE(1.0_dp)
@@ -249,7 +249,7 @@ CONTAINS
       ret = roctxRangePushA(routineN//C_NULL_CHAR)
 #endif
 
-!$OMP END MASTER
+!$OMP END MASKED
 
    END SUBROUTINE timeset_handler
 
@@ -270,7 +270,7 @@ CONTAINS
 
       routine_id = handle
 
-!$OMP MASTER
+!$OMP MASKED
 
 #if defined( __CUDA_PROFILING )
       CALL cuda_nvtx_range_pop()
@@ -350,7 +350,7 @@ CONTAINS
          CALL m_flush(timer_env%trace_unit)
       END IF
 
-!$OMP END MASTER
+!$OMP END MASKED
 
    END SUBROUTINE timestop_handler
 

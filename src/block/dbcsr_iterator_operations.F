@@ -190,12 +190,12 @@ CONTAINS
          ! explicitly forbidden.
          !
 !$OMP        BARRIER
-!$OMP        MASTER
+!$OMP        MASKED
          ALLOCATE (iterator%common_pos)
          common_int_pointer => iterator%common_pos
          common_int_pointer = 0
 !$OMP        FLUSH (common_int_pointer)
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          IF (.NOT. ASSOCIATED(iterator%common_pos)) THEN
             iterator%common_pos => common_int_pointer
@@ -288,11 +288,11 @@ CONTAINS
 !$OMP     END CRITICAL (crit_data)
       IF (iterator%dynamic) THEN
 !$OMP        BARRIER
-!$OMP        MASTER
+!$OMP        MASKED
          common_int_pointer => iterator%common_pos
          DEALLOCATE (common_int_pointer)
 !$OMP        FLUSH (common_int_pointer)
-!$OMP        END MASTER
+!$OMP        END MASKED
          NULLIFY (iterator%common_pos)
 !$OMP        BARRIER
       END IF

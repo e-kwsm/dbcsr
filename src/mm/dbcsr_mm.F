@@ -137,7 +137,7 @@ CONTAINS
 
       CALL dbcsr_mm_multrec_lib_init()
 
-!$OMP     MASTER
+!$OMP     MASKED
       dbcsr_mpi_statistics%last_mpi_ranks_used = 0
       dbcsr_mpi_statistics%nimages = -1
       dbcsr_mpi_statistics%nexchanged = 0
@@ -148,7 +148,7 @@ CONTAINS
       marketing_flops = 0
       max_memory = 0
       ALLOCATE (memtype_product_wm(0:nthreads - 1))
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
 
       ! Each thread has its own working-matrix and its own mempool
@@ -176,7 +176,7 @@ CONTAINS
          CALL dbcsr_mempool_destruct(memtype_product_wm(ithread)%p%pool)
       DEALLOCATE (memtype_product_wm(ithread)%p)
 !$OMP      BARRIER
-!$OMP      MASTER
+!$OMP      MASKED
       DEALLOCATE (memtype_product_wm)
 
       ! Deallocate buffers
@@ -205,7 +205,7 @@ CONTAINS
          CALL acc_stream_destroy(stream_1)
       IF (acc_stream_associated(stream_2)) &
          CALL acc_stream_destroy(stream_2)
-!$OMP      END MASTER
+!$OMP      END MASKED
 
       CALL timestop(error_handle)
 
@@ -315,7 +315,7 @@ CONTAINS
       IF (ASSOCIATED(memtype_product_wm(ithread)%p%pool)) &
          CALL dbcsr_mempool_clear(memtype_product_wm(ithread)%p%pool)
 
-!$OMP      MASTER
+!$OMP      MASKED
       IF (ASSOCIATED(memtype_trsbuffer_1%pool)) &
          CALL dbcsr_mempool_clear(memtype_trsbuffer_1%pool)
       IF (ASSOCIATED(memtype_trsbuffer_2%pool)) &
@@ -330,7 +330,7 @@ CONTAINS
          CALL dbcsr_mempool_clear(memtype_abpanel_1%pool)
       IF (ASSOCIATED(memtype_abpanel_2%pool)) &
          CALL dbcsr_mempool_clear(memtype_abpanel_2%pool)
-!$OMP      END MASTER
+!$OMP      END MASKED
    END SUBROUTINE dbcsr_multiply_clear_mempools
 
    SUBROUTINE dbcsr_multiply_generic(transa, transb, &

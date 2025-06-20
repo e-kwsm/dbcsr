@@ -52,11 +52,11 @@ CONTAINS
       ! Set active device first
       CALL dbcsr_acc_set_active_device(get_accdrv_active_device_id())
 !$OMP    PARALLEL DEFAULT(NONE) PRIVATE(istat)
-!$OMP    MASTER
+!$OMP    MASKED
       istat = acc_interface_drv_init()
       IF (istat /= 0) &
          DBCSR_ABORT("acc_init failed")
-!$OMP    END MASTER
+!$OMP    END MASKED
 !$OMP    END PARALLEL
 #endif
    END SUBROUTINE acc_init
@@ -68,11 +68,11 @@ CONTAINS
 #else
       INTEGER                                :: istat
 !$OMP    PARALLEL DEFAULT(NONE) PRIVATE(istat)
-!$OMP    MASTER
+!$OMP    MASKED
       istat = acc_interface_drv_finalize()
       IF (istat /= 0) &
          DBCSR_ABORT("acc_finalize failed")
-!$OMP    END MASTER
+!$OMP    END MASKED
 !$OMP    END PARALLEL
 #endif
    END SUBROUTINE acc_finalize

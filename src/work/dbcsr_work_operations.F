@@ -704,7 +704,7 @@ CONTAINS
 !$          nw = omp_get_max_threads()
 !$       END IF
       END IF
-!$OMP     MASTER
+!$OMP     MASKED
       wms_new = .NOT. ASSOCIATED(matrix%wms)
       wms_realloc = .FALSE.
       IF (ASSOCIATED(matrix%wms)) THEN
@@ -742,7 +742,7 @@ CONTAINS
          END DO
       END IF
       matrix%valid = .FALSE.
-!$OMP     END MASTER
+!$OMP     END MASKED
       CALL timestop(handle)
    END SUBROUTINE dbcsr_work_create
 
@@ -769,9 +769,9 @@ CONTAINS
 
       CALL timeset(routineN, handle)
 
-!$OMP     MASTER
+!$OMP     MASKED
       NULLIFY (old_blk_p, old_col_i, old_row_p)
-!$OMP     END MASTER
+!$OMP     END MASKED
 
 !$OMP     BARRIER
       ! If the matrix is not marked as dirty then skip the work.
@@ -782,11 +782,11 @@ CONTAINS
          ! arrays.  This may happen when this routine is called on a
          ! matrix that was not changed.
 !$OMP        BARRIER
-!$OMP        MASTER
+!$OMP        MASKED
          IF (ASSOCIATED(matrix%wms)) &
             CALL dbcsr_work_destroy_all(matrix)
          matrix%valid = .TRUE.
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          CALL timestop(handle)
          RETURN
@@ -801,13 +801,13 @@ CONTAINS
       !
       ! Now make sure that a valid row_p exists. Also clear the row_p if
       ! the matrix is declared to have 0 blocks.
-!$OMP     MASTER
+!$OMP     MASKED
       fake_row_p = .NOT. ASSOCIATED(matrix%row_p)
       IF (ASSOCIATED(matrix%row_p)) THEN
          fake_row_p = SIZE(matrix%row_p) .LE. 1
       END IF
       fake_row_p = fake_row_p .OR. matrix%nblks .EQ. 0
-!$OMP     END MASTER
+!$OMP     END MASKED
       !
       ! See where data will be appended in the main data
       ! area. Alternatively, set to the start if the matrix is declared
@@ -815,9 +815,9 @@ CONTAINS
       ! because the main data area is always new.)
       start_offset = matrix%nze
       i = dbcsr_get_data_size_used(matrix)
-!$OMP     MASTER
+!$OMP     MASKED
       matrix%nze = 0
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
 !$OMP     ATOMIC
       matrix%nze = matrix%nze + i
@@ -838,13 +838,13 @@ CONTAINS
       IF (sort_data .AND. matrix%nze .GT. 0) THEN
          CALL dbcsr_add_wm_from_matrix(matrix)
          matrix%nze = 0
-!$OMP        MASTER
+!$OMP        MASKED
          fake_row_p = .TRUE.
-!$OMP        END MASTER
+!$OMP        END MASKED
       END IF
       start_offset = dbcsr_data_get_size_referenced(matrix%data_area) + 1
       IF (matrix%nze .EQ. 0) start_offset = 1
-!$OMP     MASTER
+!$OMP     MASKED
       matrix%index(dbcsr_slot_nze) = matrix%nze
       IF (fake_row_p) THEN
          ALLOCATE (empty_row_p(matrix%nblkrows_total + 1))
@@ -857,7 +857,7 @@ CONTAINS
                                       reservation=0)
          CALL dbcsr_repoint_index(matrix)
       END IF
-!$OMP     END MASTER
+!$OMP     END MASKED
       !
 !$OMP     BARRIER
       can_quick = can_quickly_finalize(matrix)
@@ -868,7 +868,7 @@ CONTAINS
          CALL quick_finalize(matrix)
       ELSE
          !
-!$OMP        MASTER
+!$OMP        MASKED
          !
          ! Create work matrices if not yet existing
          IF (.NOT. ASSOCIATED(matrix%wms)) THEN
@@ -876,7 +876,7 @@ CONTAINS
 !$          nwms = omp_get_num_threads()
             CALL dbcsr_work_create(matrix, n=nwms)
          END IF
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          !
          ! Ensure index arrays at least exist.
@@ -895,7 +895,7 @@ CONTAINS
 !$OMP        ENDDO
          !
          ! Check for deleted blocks
-!$OMP        MASTER
+!$OMP        MASKED
          nblks = matrix%row_p(matrix%nblkrows_total + 1)
          IF (ANY(matrix%blk_p(1:nblks) .EQ. 0)) THEN
             CALL dbcsr_index_prune_deleted(matrix)
@@ -903,7 +903,7 @@ CONTAINS
          old_row_p => matrix%row_p
          old_col_i => matrix%col_i
          old_blk_p => matrix%blk_p
-!$OMP        END MASTER
+!$OMP        END MASKED
          !
 !$OMP        BARRIER
          ! Check to see if we will need to create a parallel environment
@@ -935,24 +935,24 @@ CONTAINS
          END IF
       END IF
 !$OMP BARRIER
-!$OMP MASTER
+!$OMP MASKED
       ! Clean up.
       IF (ASSOCIATED(matrix%wms)) THEN
          CALL dbcsr_work_destroy_all(matrix)
       END IF
       matrix%valid = .TRUE.
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
       IF (dbg) THEN
 !$OMP        SINGLE
          CALL dbcsr_verify_matrix(matrix)
 !$OMP        END SINGLE
       END IF
-!$OMP MASTER
+!$OMP MASKED
       IF (fake_row_p) THEN
          DEALLOCATE (empty_row_p)
       END IF
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
       CALL timestop(handle)
    END SUBROUTINE dbcsr_finalize
@@ -1000,7 +1000,7 @@ CONTAINS
             DBCSR_ABORT("merge_single_wm only supports data sorting")
          !
          ! Ensure needed index arrays at least exist.
-!$OMP        MASTER
+!$OMP        MASKED
          !
          IF (.NOT. ASSOCIATED(matrix%wms(1)%row_i)) THEN
             CALL ensure_array_size(matrix%wms(1)%row_i, ub=0)
@@ -1012,7 +1012,7 @@ CONTAINS
             CALL ensure_array_size(matrix%wms(1)%blk_p, ub=0)
          END IF
          !
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          !
 !$OMP        PARALLEL DEFAULT (NONE), SHARED(matrix)
@@ -1021,13 +1021,13 @@ CONTAINS
 
       END IF
 
-!$OMP     MASTER
+!$OMP     MASKED
       ! Clean up.
       IF (ASSOCIATED(matrix%wms)) THEN
          CALL dbcsr_work_destroy_all(matrix)
       END IF
       matrix%valid = .TRUE.
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       IF (dbg) THEN
 !$OMP        SINGLE
@@ -1147,14 +1147,14 @@ CONTAINS
       nwms = MAX(1, old_nwms)
 !$    nwms = MAX(nwms, nthreads)
 !$OMP     BARRIER
-!$OMP     MASTER
+!$OMP     MASKED
       IF (.NOT. ASSOCIATED(matrix%wms)) THEN
          CALL dbcsr_work_create(matrix, &
                                 INT(matrix%nblks*default_resize_factor/nwms), &
                                 INT(matrix%nze*default_resize_factor/nwms), &
                                 n=nwms, work_mutable=.FALSE.)
       END IF
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       size_used = matrix%nze
       CALL dbcsr_fill_wm_from_matrix(matrix%wms, matrix, size_used, &
@@ -1211,12 +1211,12 @@ CONTAINS
          wm_last = nwms
       END IF
       ! Prepares the work matrices to accept the main data.
-!$OMP     MASTER
+!$OMP     MASKED
       mutable = .FALSE.
       DO which_wm = 1, nwms
          mutable = mutable .OR. dbcsr_wm_use_mutable(wm(which_wm))
       END DO
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       DO which_wm = wm_first, wm_last
          IF (dbcsr_wm_use_mutable(wm(which_wm))) &
@@ -1460,7 +1460,7 @@ CONTAINS
       !
       ! Initializations and some counts from the threads are summed.
       !
-!$OMP     MASTER
+!$OMP     MASKED
       new_nblks = old_row_p(nrows + 1)
       new_nze = matrix%nze
       ALLOCATE (all_row_p(nwms))
@@ -1481,7 +1481,7 @@ CONTAINS
       all_data_sizes(0) = matrix%nze
       rbs => array_data(matrix%row_blk_size)
       cbs => array_data(matrix%col_blk_size)
-!$OMP     END MASTER
+!$OMP     END MASKED
       !
 !$OMP     BARRIER
       IF (sort_data .AND. wm%datasize_after_filtering .GE. 0) THEN
@@ -1496,7 +1496,7 @@ CONTAINS
       new_nze = new_nze + wm_datasize
 !$OMP     BARRIER
       !
-!$OMP     MASTER
+!$OMP     MASKED
       ALLOCATE (new_row_p(nrows + 1))
       ALLOCATE (new_col_i(new_nblks))
       ALLOCATE (new_blk_p(new_nblks))
@@ -1505,7 +1505,7 @@ CONTAINS
       ELSE
          ALLOCATE (blk_d(1))
       END IF
-!$OMP     END MASTER
+!$OMP     END MASKED
       !
       ! Each thread creates a row_p index for its new blocks.  This gives the
       ! number of new blocks per thread per row.
@@ -1525,21 +1525,21 @@ CONTAINS
       all_blk_p(which_wm)%p => wm%blk_p
 !$OMP     BARRIER
       IF (sort_data) THEN
-!$OMP        MASTER
+!$OMP        MASKED
          all_data_offsets(:) = 0
-!$OMP        END MASTER
+!$OMP        END MASKED
          CALL dbcsr_data_init(all_data_areas(which_wm))
          all_data_areas(which_wm) = wm%data_area
 !$OMP        CRITICAL (crit_data)
          CALL dbcsr_data_hold(all_data_areas(which_wm))
 !$OMP        END CRITICAL (crit_data)
       ELSE
-!$OMP        MASTER
+!$OMP        MASKED
          all_data_offsets(1) = all_data_sizes(0)
          DO t = 2, nwms
             all_data_offsets(t) = all_data_offsets(t - 1) + all_data_sizes(t - 1)
          END DO
-!$OMP        END MASTER
+!$OMP        END MASKED
       END IF
       !
       ! The new row counts are created, then the new row_p index is created.
@@ -1554,10 +1554,10 @@ CONTAINS
          new_row_p(row) = my_row_count
       END DO
 !$OMP     END DO
-!$OMP     MASTER
+!$OMP     MASKED
       max_row_count = MAXVAL(new_row_p(1:nrows))
       CALL dbcsr_build_row_index(new_row_p, nrows)
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       !
       ! The new index is built
@@ -1569,7 +1569,7 @@ CONTAINS
       !
       ! The data is then merged in one of two ways.
       !
-!$OMP     MASTER
+!$OMP     MASKED
       IF (sort_data) THEN
          ! The matrix gets a fresh data area.  Blocks from the work
          ! matrices will be copied into it in order.
@@ -1589,7 +1589,7 @@ CONTAINS
          ! current data area.
          CALL dbcsr_data_ensure_size(matrix%data_area, new_nze)
       END IF
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       IF (sort_data) THEN
          CALL dbcsr_calc_block_sizes(new_blk_sizes, &
@@ -1612,7 +1612,7 @@ CONTAINS
       ! Creates a new index array.
       !
 !$OMP     BARRIER
-!$OMP     MASTER
+!$OMP     MASKED
       CALL dbcsr_clearfrom_index_array(matrix, dbcsr_slot_row_p)
       CALL dbcsr_clearfrom_index_array(matrix, dbcsr_slot_col_i)
       CALL dbcsr_clearfrom_index_array(matrix, dbcsr_slot_blk_p)
@@ -1632,13 +1632,13 @@ CONTAINS
       matrix%index(dbcsr_slot_nblks) = matrix%nblks
       matrix%index(dbcsr_slot_nze) = matrix%nze
       CALL dbcsr_repoint_index(matrix)
-!$OMP     END MASTER
+!$OMP     END MASKED
       !
 !$OMP     BARRIER
       !
       DEALLOCATE (my_row_p)
       IF (sort_data) THEN
-!$OMP        MASTER
+!$OMP        MASKED
 !$OMP        CRITICAL (crit_data)
          CALL dbcsr_data_release(all_data_areas(0))
 !$OMP        END CRITICAL (crit_data)
@@ -1647,10 +1647,10 @@ CONTAINS
             CALL dbcsr_data_release(all_data_areas(which_wm))
 !$OMP           END CRITICAL (crit_data)
          END DO
-!$OMP        END MASTER
+!$OMP        END MASKED
       END IF
 !$OMP     BARRIER
-!$OMP     MASTER
+!$OMP     MASKED
       DEALLOCATE (all_row_p)
       DEALLOCATE (all_col_i)
       DEALLOCATE (all_blk_p)
@@ -1665,7 +1665,7 @@ CONTAINS
          DEALLOCATE (new_blk_p_sorted)
       END IF
       DEALLOCATE (blk_d)
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       IF (dbg) WRITE (*, *) routineN//" stopped"
       CALL timestop(handle)
@@ -1703,7 +1703,7 @@ CONTAINS
       !
       ! The following is valid because the data actually referenced
       ! by blocks is explicitly calculated in dbcsr_finalize.
-!$OMP     MASTER
+!$OMP     MASKED
       rbs => array_data(matrix%row_blk_size)
       cbs => array_data(matrix%col_blk_size)
       !
@@ -1723,7 +1723,7 @@ CONTAINS
       ! matrices will be copied into it in order.
       !
       CALL dbcsr_data_ensure_size(matrix%data_area, wm%datasize, nocopy=.TRUE.)
-!$OMP     END MASTER
+!$OMP     END MASKED
 !$OMP     BARRIER
       CALL dbcsr_calc_block_sizes(new_blk_sizes, &
                                   new_row_p, wm%col_i, rbs, cbs)
@@ -1734,7 +1734,7 @@ CONTAINS
       ! Creates a new index array.
       !
 !$OMP     BARRIER
-!$OMP     MASTER
+!$OMP     MASKED
       CALL dbcsr_clearfrom_index_array(matrix, dbcsr_slot_row_p)
       CALL dbcsr_clearfrom_index_array(matrix, dbcsr_slot_col_i)
       CALL dbcsr_clearfrom_index_array(matrix, dbcsr_slot_blk_p)
@@ -1753,7 +1753,7 @@ CONTAINS
       DEALLOCATE (new_blk_sizes)
       DEALLOCATE (new_blk_p_sorted)
       DEALLOCATE (blk_d)
-!$OMP     END MASTER
+!$OMP     END MASKED
       IF (dbg) WRITE (*, *) routineN//" stopped"
       CALL timestop(handle)
    END SUBROUTINE dbcsr_merge_single_wm

@@ -470,9 +470,9 @@ CONTAINS
 !$OMP         received_data_area, scale_neg_one, memtype_abpanel_1)
       ithread = 0
 !$    ithread = omp_get_thread_num()
-!$OMP MASTER
+!$OMP MASKED
 !$    nthreads = omp_get_num_threads()
-!$OMP END MASTER
+!$OMP END MASKED
 
       ! Allocate thread private data
       !
@@ -527,12 +527,12 @@ CONTAINS
       total_send_count(:, :) = total_send_count(:, :) + myt_total_send_count(:, :)
 !$OMP END CRITICAL
 !$OMP BARRIER
-!$OMP MASTER
+!$OMP MASKED
       CALL timeset(routineN//"_sizes", handle2)
       CALL mp_alltoall(send_count, recv_count, 2*nrow_images*ncol_images, &
                        mp_group)
       CALL timestop(handle2)
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
       ! Fill in the meta data structures and copy the data.
 !$OMP DO
@@ -540,7 +540,7 @@ CONTAINS
          total_recv_count(1, dst_p) = SUM(recv_count(1, :, :, dst_p))
          total_recv_count(2, dst_p) = SUM(recv_count(2, :, :, dst_p))
       END DO
-!$OMP MASTER
+!$OMP MASKED
       ! Allocate data structures needed for data exchange.
       CALL dbcsr_data_init(recv_data_area)
       CALL dbcsr_data_init(send_data_area)
@@ -575,7 +575,7 @@ CONTAINS
          all_total_send_offset(1, :) = myt_smp(:) + metalen*myt_total_send_count(1, :)
          all_total_send_offset(2, :) = myt_sdp(:) + myt_total_send_count(2, :)
       END IF
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
       IF (ithread .GT. 0) THEN
 !$OMP CRITICAL
@@ -929,7 +929,7 @@ CONTAINS
 
 !$OMP PARALLEL DEFAULT (NONE) &
 !$OMP SHARED (multrec, nthreads, product_matrix)
-!$OMP MASTER
+!$OMP MASKED
       nthreads = 1
 !$    nthreads = OMP_GET_NUM_THREADS()
       IF (.NOT. ASSOCIATED(product_matrix%wms)) &
@@ -937,7 +937,7 @@ CONTAINS
       IF (SIZE(product_matrix%wms) .NE. nthreads) &
          DBCSR_ABORT("Work matrices not correctly sized.")
       ALLOCATE (multrec(0:nthreads - 1))
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
 
       output_unit = default_output_unit
@@ -1878,7 +1878,7 @@ CONTAINS
 
 !$OMP PARALLEL DEFAULT (NONE) &
 !$OMP SHARED (multrec, nthreads, product_matrix)
-!$OMP MASTER
+!$OMP MASKED
       nthreads = 1
 !$    nthreads = OMP_GET_NUM_THREADS()
       IF (.NOT. ASSOCIATED(product_matrix%wms)) &
@@ -1886,7 +1886,7 @@ CONTAINS
       IF (SIZE(product_matrix%wms) .NE. nthreads) &
          DBCSR_ABORT("Work matrices not correctly sized.")
       ALLOCATE (multrec(0:nthreads - 1))
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
 
       output_unit = default_output_unit

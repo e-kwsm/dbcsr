@@ -842,9 +842,9 @@ CONTAINS
          CALL dbcsr_get_stored_coordinates(matrix, stored_row, stored_col)
          IF (.NOT. ASSOCIATED(matrix%wms)) THEN
             CALL dbcsr_work_create(matrix, work_mutable=.TRUE.)
-!$OMP        MASTER
+!$OMP        MASKED
             matrix%valid = .FALSE.
-!$OMP        END MASTER
+!$OMP        END MASKED
 !$OMP        BARRIER
          END IF
 

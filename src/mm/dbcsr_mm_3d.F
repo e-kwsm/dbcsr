@@ -540,7 +540,7 @@ CONTAINS
          rowi => ui
          coli => mi
       END IF
-!$OMP MASTER
+!$OMP MASKED
       nthreads = 1
 !$    nthreads = omp_get_num_threads()
       ALLOCATE (send_sizes(idata:imeta, 0:nthreads - 1, &
@@ -554,7 +554,7 @@ CONTAINS
 !$    IF (is_left .AND. do_symmetry) THEN
 !$       ALLOCATE (locks(0:nthreads - 1))
 !$    END IF
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
 !$    IF (is_left .AND. do_symmetry) THEN
 !$       call omp_init_lock(locks(ithread))
@@ -603,7 +603,7 @@ CONTAINS
       END DO
       CALL dbcsr_iterator_stop(iter)
 !$OMP BARRIER
-!$OMP MASTER
+!$OMP MASKED
       ! Exchange refs
       ALLOCATE (recv_sizes(idata:imeta, 0:nthreads - 1, &
                            nimages, 0:nprocs_total - 1))
@@ -741,7 +741,7 @@ CONTAINS
          offset_data(:, ui, mynode) = send_displs(idata, :, ui, mynode) + 1
          send_displs(idata, :, ui, mynode) = send_displs(idata, :, ui, mynode) + local_images_displ(idata, ui) + 1
       END DO
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
       !
       IF (do_part_crop_row .OR. do_part_crop_col) THEN
@@ -872,7 +872,7 @@ CONTAINS
       END IF
       !
 !$OMP BARRIER
-!$OMP MASTER
+!$OMP MASKED
       !
       ! Allocate data/meta to recv
       IF (dbcsr_data_valid(make_buffers_data_recv)) THEN
@@ -900,7 +900,7 @@ CONTAINS
                               mp_obj, &
                               most_ptp=.TRUE., remainder_ptp=.TRUE., no_hybrid=.FALSE.)
       CALL timestop(handle2)
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP BARRIER
 !$    IF (is_left .AND. do_symmetry) THEN
 !$       call omp_destroy_lock(locks(ithread))
@@ -1225,10 +1225,10 @@ CONTAINS
       !
 !$OMP PARALLEL DEFAULT (NONE) &
 !$OMP SHARED (nthreads)
-!$OMP MASTER
+!$OMP MASKED
       nthreads = 1
 !$    nthreads = OMP_GET_NUM_THREADS()
-!$OMP END MASTER
+!$OMP END MASKED
 !$OMP END PARALLEL
       !
       ! Dummy checks
@@ -1919,7 +1919,7 @@ CONTAINS
                      multrec(ithread, irow3D_send, icol3D_send)%p, &
                      buffers_win%left%meta_red3D)
 !$OMP BARRIER
-!$OMP MASTER
+!$OMP MASKED
                   CALL timeset(routineN//"_red3D_size", handle2)
                   CALL mp_waitall(requests_reduction_size)
                   CALL timestop(handle2)
@@ -1958,7 +1958,7 @@ CONTAINS
                                                data_type_byte, &
                                                dbcsr_mpi_statistics%data_size_breakdown(:, :, 1))
                   END DO
-!$OMP END MASTER
+!$OMP END MASKED
                END IF
 !$OMP END PARALLEL
             END IF
@@ -2083,7 +2083,7 @@ CONTAINS
                      product_matrix3D%mats(irow3D_send, icol3D_send)%matrix%nblks + &
                      dbcsr_mm_multrec_get_nblks(multrec(ithread, irow3D_send, icol3D_send)%p)
 !$OMP BARRIER
-!$OMP MASTER
+!$OMP MASKED
                   ! First (nthreads+1) positions are reserved for
                   ! the offset sizes of each thread for meta
                   CALL ensure_array_size(buffers_win%left%meta_red3D, &
@@ -2112,7 +2112,7 @@ CONTAINS
                                     layers_3D_C_reduction%grp3D, &
                                     requests_reduction_size(1), &
                                     requests_reduction_size(2))
-!$OMP END MASTER
+!$OMP END MASKED
                ELSE
                   IF (istep_k .NE. last_step_k) &
                      DBCSR_ABORT("Last layer does not correspond to local layer")
